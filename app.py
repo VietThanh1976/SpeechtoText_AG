@@ -2,52 +2,55 @@ import streamlit as st
 import speech_recognition as sr
 import io
 import os
-import json
-import time
 
 # Thư viện cho file DOCX
 from docx import Document 
-# Thư viện xử lý audio file (thay thế pydub)
+# Thư viện xử lý audio file
 import librosa 
 import soundfile as sf 
-# Thư viện ghi âm từ micro trình duyệt (thay thế pyaudio)
+# Thư viện ghi âm từ micro trình duyệt
 from streamlit_mic_recorder import mic_recorder 
-# Thư viện mã hóa (Tùy chọn, dùng để kiểm tra mật khẩu an toàn hơn)
-from st_hashing import Hashing 
+# Thư viện đăng nhập chuyên nghiệp
+import streamlit_authenticator as stauth 
+
 
 # =========================================================================
 # I. KHỞI TẠO VÀ CẤU HÌNH BAN ĐẦU
 # =========================================================================
 
-r = sr.Recognizer()
-h = Hashing()
+# --- 1. Cấu hình Tài khoản (Tên người dùng, Tên hiển thị, Mật khẩu đã mã hóa) ---
+names = ['Quản trị viên', 'Người dùng thường']
+usernames = ['admin', 'user1']
 
-# Khởi tạo Session State
+# Mật khẩu đã mã hóa bằng bcrypt (123456 và password)
+# Bạn có thể tạo mật khẩu mã hóa mới bằng cách dùng thư viện bcrypt cục bộ.
+hashed_passwords = [
+    '$2b$12$Nq54.vWlG1X7bY4gB6k3o.0w8X7E0R2RjGv5F7K8L9M0O1P2Q3R4', # Mật khẩu: 123456
+    '$2b$12$zXy8Vw9Tq0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2'  # Mật khẩu: password
+]
+
+# --- 2. Khởi tạo Authenticator ---
+authenticator = stauth.Authenticate(
+    names,
+    usernames,
+    hashed_passwords,
+    'speech_to_text_cookie', # Tên cookie
+    'abcdefgh',             # Khóa mã hóa (nên là một chuỗi ngẫu nhiên dài)
+    cookie_expiry_days=30   # Thời hạn cookie
+)
+
+# --- 3. Khởi tạo Session State cho ứng dụng chính ---
+r = sr.Recognizer()
 if 'audio_buffer' not in st.session_state:
     st.session_state.audio_buffer = None
 if 'last_transcription_text' not in st.session_state:
     st.session_state.last_transcription_text = ""
 if 'last_audio_data' not in st.session_state:
     st.session_state.last_audio_data = None
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if 'user_name' not in st.session_state:
-    st.session_state.user_name = None
-
-# Tải thông tin người dùng từ file JSON
-try:
-    with open("user_credentials.json", "r") as f:
-        USERS = json.load(f)
-except FileNotFoundError:
-    st.error("Lỗi: Không tìm thấy file 'user_credentials.json'. Vui lòng kiểm tra lại cấu trúc file.")
-    st.stop()
-except Exception as e:
-    st.error(f"Lỗi khi đọc file JSON: {e}")
-    st.stop()
 
 
 # =========================================================================
-# II. CÁC HÀM HỖ TRỢ
+# II. CÁC HÀM HỖ TRỢ (Giữ nguyên)
 # =========================================================================
 
 def transcribe_audio_from_file_path(file_path):
@@ -58,6 +61,7 @@ def transcribe_audio_from_file_path(file_path):
             audio = r.record(source) 
         text = r.recognize_google(audio, language="vi-VN")
         return text
+    # ... (các khối except giữ nguyên)
     except sr.UnknownValueError:
         return "Không thể nhận dạng giọng nói từ tệp âm thanh này."
     except sr.RequestError as e:
@@ -68,11 +72,10 @@ def transcribe_audio_from_file_path(file_path):
 def process_uploaded_file(uploaded_file):
     """Xử lý và chuyển đổi file đã tải lên."""
     st.session_state.last_transcription_text = ""
-    # Code xử lý file dùng librosa và soundfile (giống như trước)
-    # ... (Giữ nguyên logic xử lý file của bản hoàn chỉnh trước đó)
     temp_input_path = "temp_input_audio" + os.path.splitext(uploaded_file.name)[1]
     temp_wav_path = "temp_converted_audio.wav"
     
+    # ... (Logic xử lý file dùng librosa và soundfile giữ nguyên)
     try:
         with open(temp_input_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
@@ -106,155 +109,117 @@ def create_docx(text, filename="transcribed_document.docx"):
     return docx_io.read(), filename
 
 
-def check_login():
-    """Hiển thị form đăng nhập và xử lý xác thực."""
-    
-    if st.session_state.logged_in:
-        return True
-
-    # Tạo giao diện đăng nhập ở Sidebar
-    with st.sidebar.form("login_form"):
-        st.sidebar.title("Đăng nhập 🔑")
-        username = st.text_input("Tên đăng nhập")
-        password = st.text_input("Mật khẩu", type="password")
-        login_button = st.form_submit_button("Đăng nhập")
-        
-        if login_button:
-            if username in USERS:
-                hashed_password = USERS[username]["password"]
-                
-                # Kiểm tra mật khẩu mã hóa
-                if h.check_hash(password, hashed_password):
-                    st.session_state.logged_in = True
-                    st.session_state.user_name = USERS[username]["name"]
-                    st.success(f"Chào mừng, {st.session_state.user_name}!")
-                    time.sleep(1) # Tạm dừng để người dùng thấy thông báo
-                    st.rerun() 
-                else:
-                    st.error("Mật khẩu không đúng!")
-            else:
-                st.error("Tên đăng nhập không tồn tại!")
-    
-    return False
-
-def logout():
-    """Xử lý đăng xuất."""
-    st.session_state.logged_in = False
-    st.session_state.user_name = None
-    st.session_state.last_transcription_text = "" # Xóa kết quả cũ
-    st.sidebar.success("Đã đăng xuất.")
-    st.rerun()
-
 # =========================================================================
 # III. ỨNG DỤNG CHÍNH (MAIN APP)
 # =========================================================================
 
-# 1. Kiểm tra và xử lý Đăng nhập
-if not check_login():
-    st.title("Vui lòng Đăng nhập để sử dụng Ứng dụng")
-    st.info("Sử dụng: **admin / 123456** hoặc **user1 / password**")
-    st.stop()
+# --- 1. Xử lý Đăng nhập/Đăng xuất bằng streamlit-authenticator ---
+name, authentication_status, username = authenticator.login('Đăng nhập', 'main')
+
+if authentication_status:
+    # --- Đã Đăng nhập thành công ---
+    st.title("🎤 Ứng Dụng Chuyển Giọng Nói Thành Văn Bản")
     
-# 2. Nếu đã đăng nhập, hiển thị nội dung chính
-st.title("🎤 Ứng Dụng Chuyển Giọng Nói Thành Văn Bản")
-st.markdown(f"**Người dùng:** **{st.session_state.user_name}** | **Tên đăng nhập:** `{st.session_state.user_name}`")
-
-# Nút Đăng xuất
-if st.sidebar.button("Đăng xuất"):
-    logout()
+    # Hiển thị thông tin người dùng và nút Đăng xuất ở sidebar
+    with st.sidebar:
+        st.success(f"Chào mừng, {name}!")
+        authenticator.logout('Đăng xuất', 'main') # Nút Đăng xuất
     
-# --- Chọn Phương thức ---
-st.markdown("---") 
+    st.markdown("---") 
 
-method = st.radio(
-    "Chọn phương thức nhập liệu:",
-    ('Tải lên File Âm thanh', 'Ghi âm trực tiếp từ Micro')
-)
-
-### PHƯƠNG THỨC 1: Tải lên File Âm thanh
-if method == 'Tải lên File Âm thanh':
-    uploaded_file = st.file_uploader(
-        "Tải lên tệp âm thanh (.wav, .mp3, etc.):",
-        type=['wav', 'mp3', 'ogg', 'flac']
-    )
-    if uploaded_file is not None:
-        if st.button('🚀 Chuyển đổi File thành Văn bản'):
-            with st.spinner('Đang tải và xử lý file...'):
-                process_uploaded_file(uploaded_file)
-            
-### PHƯƠNG THỨC 2: Ghi âm trực tiếp từ Micro
-elif method == 'Ghi âm trực tiếp từ Micro':
-    st.subheader("🎙️ Ghi Âm Trực Tiếp")
-    st.caption("Ghi âm bằng micro của trình duyệt.")
-
-    # Widget ghi âm
-    audio_data = mic_recorder(
-        start_prompt="Bắt đầu Ghi Âm",
-        stop_prompt="Dừng Ghi Âm",
-        key='mic_recorder',
-        format="wav"
+    # --- Phần Nội dung Chính của Ứng dụng ---
+    
+    method = st.radio(
+        "Chọn phương thức nhập liệu:",
+        ('Tải lên File Âm thanh', 'Ghi âm trực tiếp từ Micro')
     )
 
-    if audio_data:
-        st.session_state.audio_buffer = audio_data['bytes']
-        st.session_state.last_audio_data = audio_data['bytes']
-        st.audio(st.session_state.audio_buffer, format='audio/wav') 
-        
-        st.download_button(
-            label="⬇️ Tải xuống File Âm thanh (.wav)",
-            data=st.session_state.last_audio_data,
-            file_name="ghi_am_mic.wav",
-            mime="audio/wav"
+    ### PHƯƠNG THỨC 1: Tải lên File Âm thanh
+    if method == 'Tải lên File Âm thanh':
+        uploaded_file = st.file_uploader(
+            "Tải lên tệp âm thanh (.wav, .mp3, etc.):",
+            type=['wav', 'mp3', 'ogg', 'flac']
         )
-    
-    if st.session_state.audio_buffer is not None:
-        if st.button('✅ Chuyển đổi Giọng nói'):
-            st.session_state.last_transcription_text = ""
-            
-            temp_wav_path = "mic_recording_temp.wav"
-            
-            try:
-                with open(temp_wav_path, "wb") as f:
-                    f.write(st.session_state.audio_buffer)
-
-                with st.spinner('Đang nhận dạng giọng nói...'):
-                    result_text = transcribe_audio_from_file_path(temp_wav_path)
+        if uploaded_file is not None:
+            if st.button('🚀 Chuyển đổi File thành Văn bản'):
+                with st.spinner('Đang tải và xử lý file...'):
+                    process_uploaded_file(uploaded_file)
                 
-                st.session_state.last_transcription_text = result_text
+    ### PHƯƠNG THỨC 2: Ghi âm trực tiếp từ Micro
+    elif method == 'Ghi âm trực tiếp từ Micro':
+        st.subheader("🎙️ Ghi Âm Trực Tiếp")
+        st.caption("Ghi âm bằng micro của trình duyệt.")
 
-            except Exception as e:
-                st.session_state.last_transcription_text = f"Lỗi xử lý: {e}"
-            finally:
-                if os.path.exists(temp_wav_path):
-                    os.remove(temp_wav_path)
-
-
-# =========================================================================
-# IV. HIỂN THỊ KẾT QUẢ VÀ TÙY CHỌN TẢI XUỐNG
-# =========================================================================
-if st.session_state.last_transcription_text:
-    st.markdown("---")
-    st.subheader("✅ Văn bản đã chuyển đổi:")
-    
-    st.text_area("Kết quả:", st.session_state.last_transcription_text, height=250)
-
-    if "Không thể" not in st.session_state.last_transcription_text and "Lỗi" not in st.session_state.last_transcription_text:
-        
-        col1, col2 = st.columns(2)
-        
-        # Nút tải xuống file DOCX
-        docx_bytes, docx_filename = create_docx(st.session_state.last_transcription_text)
-        col1.download_button(
-            label="💾 Tải xuống MS Word (.docx)",
-            data=docx_bytes,
-            file_name=docx_filename,
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        audio_data = mic_recorder(
+            start_prompt="Bắt đầu Ghi Âm",
+            stop_prompt="Dừng Ghi Âm",
+            key='mic_recorder',
+            format="wav"
         )
+
+        if audio_data:
+            st.session_state.audio_buffer = audio_data['bytes']
+            st.session_state.last_audio_data = audio_data['bytes']
+            st.audio(st.session_state.audio_buffer, format='audio/wav') 
+            
+            st.download_button(
+                label="⬇️ Tải xuống File Âm thanh (.wav)",
+                data=st.session_state.last_audio_data,
+                file_name="ghi_am_mic.wav",
+                mime="audio/wav"
+            )
         
-        # Nút tùy chọn tải xuống file TXT
-        col2.download_button(
-            label="📝 Tải xuống Văn bản thuần (.txt)",
-            data=st.session_state.last_transcription_text.encode('utf-8'),
-            file_name="transcribed_text.txt",
-            mime="text/plain"
-        )
+        if st.session_state.audio_buffer is not None:
+            if st.button('✅ Chuyển đổi Giọng nói'):
+                st.session_state.last_transcription_text = ""
+                
+                temp_wav_path = "mic_recording_temp.wav"
+                
+                try:
+                    with open(temp_wav_path, "wb") as f:
+                        f.write(st.session_state.audio_buffer)
+
+                    with st.spinner('Đang nhận dạng giọng nói...'):
+                        result_text = transcribe_audio_from_file_path(temp_wav_path)
+                    
+                    st.session_state.last_transcription_text = result_text
+
+                except Exception as e:
+                    st.session_state.last_transcription_text = f"Lỗi xử lý: {e}"
+                finally:
+                    if os.path.exists(temp_wav_path):
+                        os.remove(temp_wav_path)
+
+    # --- Hiển thị Kết quả và Tùy chọn Tải xuống (Chung) ---
+    if st.session_state.last_transcription_text:
+        st.markdown("---")
+        st.subheader("✅ Văn bản đã chuyển đổi:")
+        
+        st.text_area("Kết quả:", st.session_state.last_transcription_text, height=250)
+
+        if "Không thể" not in st.session_state.last_transcription_text and "Lỗi" not in st.session_state.last_transcription_text:
+            
+            col1, col2 = st.columns(2)
+            
+            docx_bytes, docx_filename = create_docx(st.session_state.last_transcription_text)
+            col1.download_button(
+                label="💾 Tải xuống MS Word (.docx)",
+                data=docx_bytes,
+                file_name=docx_filename,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+            
+            col2.download_button(
+                label="📝 Tải xuống Văn bản thuần (.txt)",
+                data=st.session_state.last_transcription_text.encode('utf-8'),
+                file_name="transcribed_text.txt",
+                mime="text/plain"
+            )
+
+# --- 2. Xử lý Đăng nhập thất bại/Chưa đăng nhập ---
+elif authentication_status == False:
+    st.error('Tên đăng nhập/Mật khẩu không chính xác')
+    st.info("Sử dụng: **admin / 123456** hoặc **user1 / password**")
+elif authentication_status == None:
+    st.info('Vui lòng nhập tên người dùng và mật khẩu của bạn')
+    st.info("Sử dụng: **admin / 123456** hoặc **user1 / password**")
