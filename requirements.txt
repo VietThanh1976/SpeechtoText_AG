@@ -5,3 +5,4 @@ librosa
 soundfile
 streamlit_mic_recorder
 streamlit-authenticator==0.2.2
+pyyaml
