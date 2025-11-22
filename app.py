@@ -19,8 +19,8 @@ import streamlit_authenticator as stauth
 # =========================================================================
 
 # --- 1. Cấu hình Tài khoản (Tên người dùng, Tên hiển thị, Mật khẩu đã mã hóa) ---
-names = ['Quản trị viên', 'Người dùng thường']
-usernames = ['admin', 'user1']
+names_app = ['Quản trị viên', 'Người dùng thường']
+usernames_app = ['admin', 'user1']
 
 # Mật khẩu đã mã hóa bằng bcrypt (123456 và password)
 # Bạn có thể tạo mật khẩu mã hóa mới bằng cách dùng thư viện bcrypt cục bộ.
@@ -31,8 +31,8 @@ hashed_passwords = [
 
 # --- 2. Khởi tạo Authenticator ---
 authenticator = stauth.Authenticate(
-    names=names,
-    usernames=usernames,
+    names=names_app,
+    usernames=usernames_app,
     passwords=hashed_passwords,
     cookie_name='speech_to_text_cookie', # Tên cookie
     key='abcdefgh',             # Khóa mã hóa (nên là một chuỗi ngẫu nhiên dài)
@@ -224,5 +224,6 @@ elif authentication_status == None:
     st.info('Vui lòng nhập tên người dùng và mật khẩu của bạn')
 
     st.info("Sử dụng: **admin / 123456** hoặc **user1 / password**")
+
 
 
