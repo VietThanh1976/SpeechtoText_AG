@@ -12,7 +12,12 @@ except FileNotFoundError:
     st.stop()
 
 # 2. KHỞI TẠO AUTHENTICATOR (Truyền toàn bộ dictionary config)
-authenticator = stauth.Authenticate(config)
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
 # Gọi hàm login. Đặt form ở cột chính ('main')
 name, authentication_status, username = authenticator.login('Đăng nhập', 'main')
 
@@ -38,3 +43,4 @@ elif authentication_status == None:
     # --- Chưa đăng nhập (Lần đầu truy cập) ---
     st.title("Vui lòng Đăng nhập để sử dụng Ứng dụng")
     st.info('Nhập tên người dùng và mật khẩu của bạn để tiếp tục.')
+
