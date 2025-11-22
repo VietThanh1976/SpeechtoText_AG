@@ -8,8 +8,8 @@ credentials:
     admin: # Tên đăng nhập 1
       email: admin@example.com
       name: Quản trị viên # Tên hiển thị
-      password: $2b$12$Nq54.vWlG1X7bY4gB6k3o.0w8X7E0R2RjGv5F7K8L9M0O1P2Q3R4 # Mật khẩu đã mã hóa
+      password: $2b$12$xvetNl29BhaRb5iM98MB9.YgRRB0KoYTl2x/i4fs4Fc0WOyPcsU # Mật khẩu đã mã hóa 12345
     user1: # Tên đăng nhập 2
       email: user1@example.com
       name: Người dùng thường
-      password: $2b$12$zXy8Vw9Tq0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2
+      password: $2b$12$0UAYTUfWrzp0yMQaxy8WQ.mR6z0N3BuyAeqWy28LovE5c9z9Iz1S6 # Mật khẩu mã hóa password
