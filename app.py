@@ -36,7 +36,7 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days']
 )
 # Gọi hàm login. Đặt form ở cột chính ('main')
-name, authentication_status, username = authenticator.login('Đăng nhập', 'main')
+name, authentication_status, username = authenticator.login('Đăng nhập', 'main', key='Login')
 
 # 3. Khởi tạo Session State cho ứng dụng chính ---
 r = sr.Recognizer()
@@ -221,4 +221,5 @@ elif authentication_status == False:
     st.info("Sử dụng: **admin / vietthanh** hoặc **user1 / password**")
 elif authentication_status == None:
     st.info('Vui lòng nhập tên người dùng và mật khẩu của bạn')
+
     st.info("Sử dụng: **admin / vietthanh** hoặc **user1 / password**")
