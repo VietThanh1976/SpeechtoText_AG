@@ -20,7 +20,7 @@ import streamlit_authenticator as stauth
 
 # --- 1. Cấu hình Tài khoản (Tên người dùng, Tên hiển thị, Mật khẩu đã mã hóa) ---
 names = ['Quản trị viên', 'Người dùng thường']
-usernnames = ['admin', 'user1']
+usernames = ['admin', 'user1']
 
 # Mật khẩu đã mã hóa bằng bcrypt (123456 và password)
 # Bạn có thể tạo mật khẩu mã hóa mới bằng cách dùng thư viện bcrypt cục bộ.
@@ -224,6 +224,7 @@ elif authentication_status == None:
     st.info('Vui lòng nhập tên người dùng và mật khẩu của bạn')
 
     st.info("Sử dụng: **admin / 123456** hoặc **user1 / password**")
+
 
 
 
