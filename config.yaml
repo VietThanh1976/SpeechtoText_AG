@@ -1,7 +1,7 @@
 # config.yaml
 cookie:
   expiry_days: 30       # Thời gian hết hạn của cookie (ngày)
-  key: "motkhoadainam"  # Khóa mã hóa cho cookie (PHẢI DÀI VÀ NGẪU NHIÊN)
+  key: "d0u7o75c"  # Khóa mã hóa cho cookie (PHẢI DÀI VÀ NGẪU NHIÊN)
   name: "app_cookie"    # Tên cookie
 credentials:
   usernames:
@@ -13,4 +13,5 @@ credentials:
       email: user1@example.com
       name: Người dùng thường
       password: $2b$12$0UAYTUfWrzp0yMQaxy8WQ.mR6z0N3BuyAeqWy28LovE5c9z9Iz1S6 # Mật khẩu mã hóa password
+
 
