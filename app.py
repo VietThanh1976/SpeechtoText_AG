@@ -36,8 +36,8 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days']
 )
 # Gọi hàm login. Đặt form ở cột chính ('main')
-name, authentication_status, username = authenticator.login('Login', 'main')
-
+name, authentication_status, username = authenticator.login('Đăng nhập', 'main')
+st.info({name})
 # 3. Khởi tạo Session State cho ứng dụng chính ---
 r = sr.Recognizer()
 if 'audio_buffer' not in st.session_state:
@@ -223,6 +223,7 @@ elif authentication_status == None:
     st.info('Vui lòng nhập tên người dùng và mật khẩu của bạn')
 
     st.info("Sử dụng: **admin / vietthanh** hoặc **user1 / password**")
+
 
 
 
