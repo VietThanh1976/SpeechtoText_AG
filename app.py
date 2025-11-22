@@ -31,12 +31,12 @@ hashed_passwords = [
 
 # --- 2. Khởi tạo Authenticator ---
 authenticator = stauth.Authenticate(
-    names=names_app,
-    usernames=usernames_app,
-    passwords=hashed_passwords,
-    cookie_name='speech_to_text_cookie', # Tên cookie
-    key='abcdefgh',             # Khóa mã hóa (nên là một chuỗi ngẫu nhiên dài)
-    cookie_expiry_days=30   # Thời hạn cookie
+    names_app,
+    usernames_app,
+    hashed_passwords,
+    'speech_to_text_cookie', # Tên cookie
+    'abcdefgh',             # Khóa mã hóa (nên là một chuỗi ngẫu nhiên dài)
+    30   # Thời hạn cookie
  )
 
 # --- 3. Khởi tạo Session State cho ứng dụng chính ---
@@ -224,6 +224,7 @@ elif authentication_status == None:
     st.info('Vui lòng nhập tên người dùng và mật khẩu của bạn')
 
     st.info("Sử dụng: **admin / 123456** hoặc **user1 / password**")
+
 
 
 
